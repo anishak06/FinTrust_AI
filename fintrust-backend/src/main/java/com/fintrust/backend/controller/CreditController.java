@@ -233,13 +233,27 @@ public class CreditController {
             else if (savingsRatio >= 0.05) healthSavingsPoints = 40;
 
             int healthScore = (int) Math.round((healthExpensePoints * 0.40) + (healthSavingsPoints * 0.30) + (billConsistencyPct * 0.20) + (stabilityPoints * 0.10));
-            String overspendingRisk = "Low";
-            if (expenseRatioPct > 120.0) {
+            boolean previousSavingsExist = true;
+            Optional<FinancialData> prevDataOpt = financialDataRepository.findFirstByUserIdOrderByCreatedAtDesc(userId);
+            if (prevDataOpt.isPresent()) {
+                FinancialData prev = prevDataOpt.get();
+                if (prev.getMonth().equalsIgnoreCase(month) && prev.getYear().equals(year)) {
+                    previousSavingsExist = true;
+                } else if (prev.getSavings() == null || prev.getSavings() == 0) {
+                    previousSavingsExist = false;
+                }
+            }
+            boolean goodSavings = savings > 0 && previousSavingsExist;
+
+            String overspendingRisk = "Moderate";
+            if (score < 600 || expenseRatioPct > 120.0 || (savings == 0 && billConsistencyPct < 75.0)) {
                 overspendingRisk = "Critical";
-            } else if (expenseRatioPct > 100.0) {
+            } else if ((score >= 600 && score <= 649) || (expenseRatioPct > 100.0 && expenseRatioPct <= 120.0)) {
                 overspendingRisk = "High";
-            } else if (expenseRatioPct > 90.0) {
+            } else if ((score >= 650 && score <= 699) || (expenseRatioPct > 90.0 && expenseRatioPct <= 100.0)) {
                 overspendingRisk = "Moderate";
+            } else if (score >= 700 && expenseRatioPct <= 90.0 && goodSavings && billConsistencyPct >= 75.0) {
+                overspendingRisk = "Low";
             }
 
             // 6. Invoke Gemini AI (Insights Only, PII Strip Enforced)
@@ -351,19 +365,37 @@ public class CreditController {
         double expenseRatio = (expenses / (income > 0 ? income : 1.0)) * 100.0;
         map.put("expenseRatio", Math.round(expenseRatio * 10.0) / 10.0);
 
-        String overspendingRisk = "Low";
+        double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
+        boolean previousSavingsExist = true;
+        Optional<FinancialData> prevDataOpt = financialDataRepository.findFirstByUserIdOrderByCreatedAtDesc(fd.getUserId());
+        if (prevDataOpt.isPresent()) {
+            FinancialData prev = prevDataOpt.get();
+            if (prev.getMonth().equalsIgnoreCase(fd.getMonth()) && prev.getYear().equals(fd.getYear())) {
+                previousSavingsExist = true;
+            } else if (prev.getSavings() == null || prev.getSavings() == 0) {
+                previousSavingsExist = false;
+            }
+        }
+        boolean goodSavings = savings > 0 && previousSavingsExist;
+
+        String overspendingRisk = "Moderate";
+        if (cs.getScore() < 600 || expenseRatio > 120.0 || (savings == 0 && billConsistencyPct < 75.0)) {
+            overspendingRisk = "Critical";
+        } else if ((cs.getScore() >= 600 && cs.getScore() <= 649) || (expenseRatio > 100.0 && expenseRatio <= 120.0)) {
+            overspendingRisk = "High";
+        } else if ((cs.getScore() >= 650 && cs.getScore() <= 699) || (expenseRatio > 90.0 && expenseRatio <= 100.0)) {
+            overspendingRisk = "Moderate";
+        } else if (cs.getScore() >= 700 && expenseRatio <= 90.0 && goodSavings && billConsistencyPct >= 75.0) {
+            overspendingRisk = "Low";
+        }
+
         int penalty = 0;
         if (expenseRatio > 120.0) {
-            overspendingRisk = "Critical";
             penalty = 50;
         } else if (expenseRatio > 110.0) {
-            overspendingRisk = "High";
             penalty = 35;
         } else if (expenseRatio > 100.0) {
-            overspendingRisk = "High";
             penalty = 20;
-        } else if (expenseRatio > 90.0) {
-            overspendingRisk = "Moderate";
         }
         map.put("overspendingRiskLevel", overspendingRisk);
         map.put("creditScorePenalty", penalty);
@@ -382,9 +414,6 @@ public class CreditController {
         else if (savingsRatio >= 0.20) healthSavingsPoints = 80;
         else if (savingsRatio >= 0.10) healthSavingsPoints = 60;
         else if (savingsRatio >= 0.05) healthSavingsPoints = 40;
-
-        double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
-
         int stabilityPoints = 40;
         if (fd.getIncomeStability() != null) {
             if (fd.getIncomeStability().toLowerCase().contains("salaried")) stabilityPoints = 100;

@@ -195,19 +195,37 @@ public class LenderController {
                 double expenseRatio = expenseDist;
                 response.put("expenseRatio", Math.round(expenseRatio * 10.0) / 10.0);
 
-                String overspendingRisk = "Low";
+                double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
+                boolean previousSavingsExist = true;
+                Optional<FinancialData> prevDataOpt = financialDataRepository.findFirstByUserIdOrderByCreatedAtDesc(user.getId());
+                if (prevDataOpt.isPresent()) {
+                    FinancialData prev = prevDataOpt.get();
+                    if (prev.getMonth().equalsIgnoreCase(fd.getMonth()) && prev.getYear().equals(fd.getYear())) {
+                        previousSavingsExist = true;
+                    } else if (prev.getSavings() == null || prev.getSavings() == 0) {
+                        previousSavingsExist = false;
+                    }
+                }
+                boolean goodSavings = savingsVal > 0 && previousSavingsExist;
+
+                String overspendingRisk = "Moderate";
+                if (cs.getScore() < 600 || expenseRatio > 120.0 || (savingsVal == 0 && billConsistencyPct < 75.0)) {
+                    overspendingRisk = "Critical";
+                } else if ((cs.getScore() >= 600 && cs.getScore() <= 649) || (expenseRatio > 100.0 && expenseRatio <= 120.0)) {
+                    overspendingRisk = "High";
+                } else if ((cs.getScore() >= 650 && cs.getScore() <= 699) || (expenseRatio > 90.0 && expenseRatio <= 100.0)) {
+                    overspendingRisk = "Moderate";
+                } else if (cs.getScore() >= 700 && expenseRatio <= 90.0 && goodSavings && billConsistencyPct >= 75.0) {
+                    overspendingRisk = "Low";
+                }
+
                 int penalty = 0;
                 if (expenseRatio > 120.0) {
-                    overspendingRisk = "Critical";
                     penalty = 50;
                 } else if (expenseRatio > 110.0) {
-                    overspendingRisk = "High";
                     penalty = 35;
                 } else if (expenseRatio > 100.0) {
-                    overspendingRisk = "High";
                     penalty = 20;
-                } else if (expenseRatio > 90.0) {
-                    overspendingRisk = "Moderate";
                 }
                 response.put("overspendingRiskLevel", overspendingRisk);
                 response.put("creditScorePenalty", penalty);
@@ -226,7 +244,7 @@ public class LenderController {
                 else if (savingsRatio >= 10.0) healthSavingsPoints = 60;
                 else if (savingsRatio >= 5.0) healthSavingsPoints = 40;
 
-                double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
+
 
                 int stabilityPoints = 40;
                 if (fd.getIncomeStability() != null) {
