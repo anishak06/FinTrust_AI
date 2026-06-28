@@ -541,7 +541,7 @@ export default function Dashboard() {
                 <QrCode className="h-4 w-4 text-[#59CFFF]" /> Share Profile
               </button>
               <button
-                onClick={() => navigate('/check-eligibility')}
+                onClick={() => navigate('/monthly-expense')}
                 className="btn-glow-sky px-5 py-2.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 w-full sm:w-auto"
               >
                 <Plus className="h-4 w-4" /> New Credit Assessment
@@ -567,7 +567,7 @@ export default function Dashboard() {
                 </p>
               </div>
               <button
-                onClick={() => navigate('/check-eligibility')}
+                onClick={() => navigate('/monthly-expense')}
                 className="btn-glow-sky px-6 py-3 rounded-lg text-xs font-bold inline-flex items-center gap-1.5"
               >
                 Check Eligibility Now <ChevronRight className="h-4 w-4" />

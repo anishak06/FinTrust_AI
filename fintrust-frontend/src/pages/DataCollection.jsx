@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ClipboardList, DollarSign, CreditCard, Sparkles, HelpCircle, Briefcase, FileText, Check, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PremiumBackground from '../components/PremiumBackground';
 
 export default function DataCollection() {
-  const { token, logout } = useAuth();
+  const { token, logout, user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper to get current Month (Title case) and Year
   const currentDate = new Date();
@@ -15,39 +16,53 @@ export default function DataCollection() {
   const titleCaseMonth = currentMonthName.charAt(0).toUpperCase() + currentMonthName.slice(1).toLowerCase();
   const currentYearNum = currentDate.getFullYear();
 
+  const stateMonth = location.state?.month;
+  const stateYear = location.state?.year;
+  const stateExpenses = location.state?.monthlyExpenses;
+
   // Inputs
   const [monthlyIncome, setMonthlyIncome] = useState('');
-  const [monthlyExpenses, setMonthlyExpenses] = useState('');
+  const [monthlyExpenses, setMonthlyExpenses] = useState(stateExpenses !== undefined ? stateExpenses.toString() : '');
   const [monthlySavings, setMonthlySavings] = useState('');
   const [utilityBillConsistency, setUtilityBillConsistency] = useState('CONSISTENT');
   const [upiTransactionFrequency, setUpiTransactionFrequency] = useState('');
   const [employmentType, setEmploymentType] = useState('SALARIED');
   const [occupation, setOccupation] = useState('');
   const [existingLoans, setExistingLoans] = useState('');
-  const [month, setMonth] = useState(titleCaseMonth);
-  const [year, setYear] = useState(currentYearNum.toString());
+  const [month, setMonth] = useState(stateMonth || titleCaseMonth);
+  const [year, setYear] = useState(stateYear || currentYearNum.toString());
 
   // UI state
   const [validationError, setValidationError] = useState('');
   const [isAssessing, setIsAssessing] = useState(false);
   const [assessmentStep, setAssessmentStep] = useState(0);
 
+  // Sync expenses from localStorage whenever user, month, or year changes
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('fintrust_financial_data');
-      if (stored) {
-        const parsed = JSON.parse(stored);
-        if (parsed.totalMonthlyExpenses !== undefined) {
-          setMonthlyExpenses(parsed.totalMonthlyExpenses.toString());
-        }
-        if (parsed.totalMonthlySavings !== undefined) {
-          setMonthlySavings(parsed.totalMonthlySavings.toString());
-        }
-      }
-    } catch (e) {
-      console.error("Failed to parse local financial data", e);
+    if (!user?.username) return;
+    const totalKey = `fintrust_total_expenses_${user.username}_${month}_${year}`;
+    const storedTotal = localStorage.getItem(totalKey);
+    if (storedTotal) {
+      setMonthlyExpenses(storedTotal);
+    } else if (stateExpenses !== undefined && month === stateMonth && year === stateYear) {
+      setMonthlyExpenses(stateExpenses.toString());
+    } else {
+      // Redirect back if no itemized expenses exist for selected period
+      navigate('/monthly-expense', { state: { month, year } });
     }
-  }, []);
+  }, [month, year, user?.username, navigate]);
+
+  // Automatically calculate savings in real-time
+  useEffect(() => {
+    const inc = parseFloat(monthlyIncome);
+    const exp = parseFloat(monthlyExpenses);
+    if (!isNaN(inc) && !isNaN(exp)) {
+      setMonthlySavings((inc - exp).toString());
+    } else {
+      setMonthlySavings('');
+    }
+  }, [monthlyIncome, monthlyExpenses]);
+
 
   const steps = [
     'Parsing transaction records...',
@@ -294,15 +309,24 @@ export default function DataCollection() {
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
                 <CreditCard className="h-3.5 w-3.5 text-[#59CFFF]" /> Monthly Expenses (₹)
               </label>
-              <input
-                type="number"
-                value={monthlyExpenses}
-                onChange={(e) => setMonthlyExpenses(e.target.value)}
-                placeholder="e.g. 20000"
-                className="w-full px-4 py-3 rounded-lg glass-input text-xs"
-                required
-                min="0"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={monthlyExpenses}
+                  readOnly
+                  placeholder="Calculated from Expense Manager"
+                  className="w-full pl-4 pr-24 py-3 rounded-lg glass-input text-xs bg-[#030e21]/40 border-white/5 cursor-not-allowed"
+                  required
+                  min="0"
+                />
+                <button
+                  type="button"
+                  onClick={() => navigate('/monthly-expense', { state: { month, year } })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#59CFFF] hover:text-[#8ce2ff] hover:underline transition-colors"
+                >
+                  Edit Expenses
+                </button>
+              </div>
             </div>
 
             {/* Savings */}
@@ -313,9 +337,9 @@ export default function DataCollection() {
               <input
                 type="number"
                 value={monthlySavings}
-                onChange={(e) => setMonthlySavings(e.target.value)}
-                placeholder="e.g. 15000"
-                className="w-full px-4 py-3 rounded-lg glass-input text-xs"
+                readOnly
+                placeholder="Auto-calculated (Income - Expenses)"
+                className="w-full px-4 py-3 rounded-lg glass-input text-xs bg-[#030e21]/40 border-white/5 cursor-not-allowed"
                 required
                 min="0"
               />
