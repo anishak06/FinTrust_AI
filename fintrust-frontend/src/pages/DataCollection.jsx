@@ -112,10 +112,7 @@ export default function DataCollection() {
       return;
     }
 
-    if (expenses + savings > income * 1.5) {
-      setValidationError('The sum of monthly expenses and savings exceeds 150% of your reported income. Please verify inputs.');
-      return;
-    }
+
 
     // Trigger AI Assessment Loading Sequence
     setIsAssessing(true);

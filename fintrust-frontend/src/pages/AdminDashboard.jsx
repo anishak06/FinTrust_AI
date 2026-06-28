@@ -438,14 +438,22 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* AI Financial Risk Alert Card */}
-                    <div className={`glass-card p-5 rounded-xl text-left space-y-4 relative overflow-hidden transition-all duration-300 border-white/5 ${
-                      ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'border-[#D1495B]/30 shadow-[0_0_15px_rgba(209,73,91,0.08)]' : ''
+                    <div className={`glass-card p-5 rounded-xl text-left space-y-4 relative overflow-hidden transition-all duration-300 ${
+                      ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) 
+                        ? 'border-rose-500/50 bg-rose-500/5 shadow-[0_0_20px_rgba(209,73,91,0.15)] animate-[pulse_3s_infinite]' 
+                        : 'border-white/5'
                     }`}>
+                      {['High', 'Critical'].includes(searchResult.overspendingRiskLevel) && (
+                        <div className="bg-[#D1495B]/15 border border-[#D1495B]/30 text-[#D1495B] text-[10px] font-bold px-3 py-2.5 rounded-lg flex items-center gap-1.5 mb-1">
+                          <AlertTriangle className="h-4 w-4 shrink-0 animate-bounce" />
+                          <span>WARNING: High Risk of Financial Overspending Detected</span>
+                        </div>
+                      )}
                       <div className="flex justify-between items-center border-b border-white/5 pb-3">
                         <div>
                           <h4 className="text-xs font-bold uppercase tracking-wider text-white/85 flex items-center gap-1.5">
                             <AlertTriangle className={`h-4.5 w-4.5 ${
-                              ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'text-rose-400 animate-pulse' : 'text-[#59CFFF]'
+                              ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'text-rose-400' : 'text-[#59CFFF]'
                             }`} /> AI Financial Risk Alert
                           </h4>
                           <p className="text-[8px] text-white/40 mt-0.5">Automated cash outflow monitoring</p>
@@ -481,6 +489,12 @@ export default function AdminDashboard() {
                             {searchResult.geminiInsights || 'Outflow parameters are within safe limits.'}
                           </p>
                         </div>
+
+                        {searchResult.recommendations && (
+                          <div className="border-t border-white/5 pt-3 mt-1 text-[10px] text-[#59CFFF] font-semibold">
+                            <span>💡 Recommendation: {searchResult.recommendations.includes('[') ? JSON.parse(searchResult.recommendations)[0] : searchResult.recommendations}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
