@@ -38,7 +38,11 @@ export default function Login() {
     const result = await login(username, password);
 
     if (result.success) {
-      navigate('/' + (redirect === 'dashboard' ? 'dashboard' : redirect));
+      if (result.role === 'ROLE_ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/' + (redirect === 'dashboard' ? 'dashboard' : redirect));
+      }
     } else if (result.conflict) {
       setConflictModalOpen(true);
       setError(result.error || 'You are logged in on another device.');
@@ -54,7 +58,11 @@ export default function Login() {
     setConflictModalOpen(false);
     const result = await forceLogin(username, password);
     if (result.success) {
-      navigate('/' + (redirect === 'dashboard' ? 'dashboard' : redirect));
+      if (result.role === 'ROLE_ADMIN') {
+        navigate('/admin');
+      } else {
+        navigate('/' + (redirect === 'dashboard' ? 'dashboard' : redirect));
+      }
     } else {
       setError(result.error || 'Failed to terminate existing session.');
       setLoading(false);

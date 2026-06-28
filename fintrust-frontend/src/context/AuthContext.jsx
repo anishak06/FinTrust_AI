@@ -65,7 +65,7 @@ export function AuthProvider({ children }) {
         role: data.role
       });
 
-      return { success: true };
+      return { success: true, role: data.role };
     } catch (error) {
       return { success: false, error: error.message };
     }
@@ -102,7 +102,7 @@ export function AuthProvider({ children }) {
         role: data.role
       });
 
-      return { success: true };
+      return { success: true, role: data.role };
     } catch (error) {
       return { success: false, error: error.message };
     }

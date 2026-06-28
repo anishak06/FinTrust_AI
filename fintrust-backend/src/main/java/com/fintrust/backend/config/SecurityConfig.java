@@ -52,6 +52,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/credit/verify-profile/**").permitAll()
                 .requestMatchers("/api/user/qr-code").authenticated()
                 .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                .requestMatchers("/api/lender/**").hasAuthority("ROLE_ADMIN")
                 .anyRequest().authenticated()
             );
 
@@ -63,7 +64,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000")); // Vite and standard react ports
+        configuration.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:5174", "http://localhost:3000")); // Vite and standard react ports
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Cache-Control", "Accept", "Origin", "X-Requested-With"));
         configuration.setExposedHeaders(Collections.singletonList("Authorization"));
