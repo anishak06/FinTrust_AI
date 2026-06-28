@@ -142,8 +142,8 @@ export default function MonthlyExpenseManager() {
       localStorage.setItem(totalKey, totalExpenses.toString());
     }
 
-    // Navigate to Credit Assessment Form
-    navigate('/check-eligibility', {
+    // Navigate to Savings Manager
+    navigate('/monthly-savings', {
       state: {
         month,
         year,

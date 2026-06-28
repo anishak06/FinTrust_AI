@@ -175,17 +175,74 @@ public class LenderController {
 
                 // Financial Behaviour
                 Map<String, Object> behaviour = new HashMap<>();
-                behaviour.put("monthlyIncome", fd.getIncome() != null ? fd.getIncome() : 0.0);
-                behaviour.put("monthlyExpenses", fd.getExpenses() != null ? fd.getExpenses() : 0.0);
-                behaviour.put("monthlySavings", fd.getSavings() != null ? fd.getSavings() : 0.0);
+                double incomeVal = fd.getIncome() != null ? fd.getIncome() : 0.0;
+                double expensesVal = fd.getExpenses() != null ? fd.getExpenses() : 0.0;
+                double savingsVal = fd.getSavings() != null ? fd.getSavings() : 0.0;
+
+                behaviour.put("monthlyIncome", incomeVal);
+                behaviour.put("monthlyExpenses", expensesVal);
+                behaviour.put("monthlySavings", savingsVal);
                 
-                double savingsRatio = fd.getIncome() != null && fd.getIncome() > 0 && fd.getSavings() != null ? (fd.getSavings() / fd.getIncome()) * 100.0 : 0.0;
+                double savingsRatio = incomeVal > 0 ? (savingsVal / incomeVal) * 100.0 : 0.0;
                 behaviour.put("savingsRatio", Math.round(savingsRatio * 10.0) / 10.0 + "%");
                 behaviour.put("billPaymentHistory", fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() + "% on-time" : "N/A");
                 
-                double expenseDist = fd.getIncome() != null && fd.getIncome() > 0 && fd.getExpenses() != null ? (fd.getExpenses() / fd.getIncome()) * 100.0 : 0.0;
+                double expenseDist = incomeVal > 0 ? (expensesVal / incomeVal) * 100.0 : 0.0;
                 behaviour.put("expenseDistribution", Math.round(expenseDist * 10.0) / 10.0 + "%");
                 response.put("behaviour", behaviour);
+
+                // Overspending and Financial Health Score
+                double expenseRatio = expenseDist;
+                response.put("expenseRatio", Math.round(expenseRatio * 10.0) / 10.0);
+
+                String overspendingRisk = "Low";
+                int penalty = 0;
+                if (expenseRatio > 120.0) {
+                    overspendingRisk = "Critical";
+                    penalty = 50;
+                } else if (expenseRatio > 110.0) {
+                    overspendingRisk = "High";
+                    penalty = 35;
+                } else if (expenseRatio > 100.0) {
+                    overspendingRisk = "High";
+                    penalty = 20;
+                } else if (expenseRatio > 90.0) {
+                    overspendingRisk = "Moderate";
+                }
+                response.put("overspendingRiskLevel", overspendingRisk);
+                response.put("creditScorePenalty", penalty);
+
+                // Financial Health Score Components
+                int healthExpensePoints = 20;
+                if (expenseRatio <= 70.0) healthExpensePoints = 100;
+                else if (expenseRatio <= 80.0) healthExpensePoints = 80;
+                else if (expenseRatio <= 90.0) healthExpensePoints = 60;
+                else if (expenseRatio <= 100.0) healthExpensePoints = 40;
+
+                int healthSavingsPoints = 20;
+                if (savingsVal == 0) healthSavingsPoints = 0;
+                else if (savingsRatio >= 30.0) healthSavingsPoints = 100;
+                else if (savingsRatio >= 20.0) healthSavingsPoints = 80;
+                else if (savingsRatio >= 10.0) healthSavingsPoints = 60;
+                else if (savingsRatio >= 5.0) healthSavingsPoints = 40;
+
+                double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
+
+                int stabilityPoints = 40;
+                if (fd.getIncomeStability() != null) {
+                    if (fd.getIncomeStability().toLowerCase().contains("salaried")) stabilityPoints = 100;
+                    else if (fd.getIncomeStability().toLowerCase().contains("freelancer")) stabilityPoints = 80;
+                    else stabilityPoints = 60;
+                }
+
+                int healthScore = (int) Math.round((healthExpensePoints * 0.40) + (healthSavingsPoints * 0.30) + (billConsistencyPct * 0.20) + (stabilityPoints * 0.10));
+                response.put("financialHealthScore", healthScore);
+
+                String healthLabel = "Poor";
+                if (healthScore >= 90) healthLabel = "Excellent";
+                else if (healthScore >= 75) healthLabel = "Good";
+                else if (healthScore >= 60) healthLabel = "Average";
+                response.put("financialHealthScoreLabel", healthLabel);
 
                 // Loan Recommendation details
                 Map<String, Object> loanRecommendation = new HashMap<>();
@@ -197,7 +254,21 @@ public class LenderController {
                 response.put("loanRecommendation", loanRecommendation);
 
                 // AI Financial Insights (Gemini)
-                response.put("geminiInsights", rec.getGeminiInsights() != null ? rec.getGeminiInsights() : "No AI insights generated yet for this borrower.");
+                String rawInsights = "No AI insights generated yet for this borrower.";
+                String rawHealthExplanation = "Your financial health profile indicates a solid foundation. Focus on optimizing savings behavior and maintaining a low expense-to-income ratio.";
+                String geminiInsights = latestRecOpt.isPresent() ? latestRecOpt.get().getGeminiInsights() : null;
+                if (geminiInsights != null) {
+                    String[] parts = geminiInsights.split("\\[Underwriting Decision Details\\]:");
+                    rawInsights = parts[0].trim();
+                    if (parts.length > 1) {
+                        String[] subParts = parts[1].split("\\[Financial Health Details\\]:");
+                        if (subParts.length > 1) {
+                            rawHealthExplanation = subParts[1].trim();
+                        }
+                    }
+                }
+                response.put("geminiInsights", rawInsights);
+                response.put("financialHealthExplanation", rawHealthExplanation);
 
                 // Trend charts data: Get historical data sorted chronologically
                 List<CreditScore> history = creditScoreRepository.findByUserIdOrderByCalculationDateDesc(user.getId());

@@ -45,7 +45,8 @@ public class GeminiService {
      */
     public AiRecommendation generateFinancialInsights(
             Long userId, int score, double income, double savings, double expenses, double consistency, int transactions,
-            boolean loanEligible, double suggestedLoanAmount, String month, Integer year) {
+            boolean loanEligible, double suggestedLoanAmount, String month, Integer year,
+            double expenseRatio, String overspendingRiskLevel, int penalty, int healthScore) {
 
         if (!StringUtils.hasText(geminiKey)) {
             logger.info("Gemini API key is not configured. Falling back to local rule-based insights engine.");
@@ -53,7 +54,7 @@ public class GeminiService {
         }
 
         try {
-            String prompt = buildInsightsPrompt(score, income, savings, expenses, consistency, transactions, loanEligible, suggestedLoanAmount, month, year);
+            String prompt = buildInsightsPrompt(score, income, savings, expenses, consistency, transactions, loanEligible, suggestedLoanAmount, month, year, expenseRatio, overspendingRiskLevel, penalty, healthScore);
             String response = callGeminiApi(prompt);
             return parseInsightsResponse(userId, response, month, year);
         } catch (Exception e) {
@@ -64,7 +65,8 @@ public class GeminiService {
 
     private String buildInsightsPrompt(
             int score, double income, double savings, double expenses, double consistency, int transactions,
-            boolean loanEligible, double suggestedLoanAmount, String month, Integer year) {
+            boolean loanEligible, double suggestedLoanAmount, String month, Integer year,
+            double expenseRatio, String overspendingRiskLevel, int penalty, int healthScore) {
         
         return "You are a friendly financial coach. Generate plain, simple, and encouraging financial insights for this person for " + month + " " + year + ":\n" +
                 "- Credit Score: " + score + " / 900\n" +
@@ -74,11 +76,15 @@ public class GeminiService {
                 "- Bill Payment Consistency: " + consistency + "%\n" +
                 "- UPI Digital Transactions: " + transactions + " transactions/month\n" +
                 "- Loan Eligibility Status: " + (loanEligible ? "ELIGIBLE" : "NOT ELIGIBLE") + "\n" +
-                "- Suggested Loan Limit: \u20B9" + suggestedLoanAmount + "\n\n" +
+                "- Suggested Loan Limit: \u20B9" + suggestedLoanAmount + "\n" +
+                "- Expense-to-Income Ratio: " + Math.round(expenseRatio * 10.0) / 10.0 + "%\n" +
+                "- Overspending Risk Level: " + overspendingRiskLevel + "\n" +
+                "- Overspending Score Penalty Applied: " + penalty + " points\n" +
+                "- Financial Health Score: " + healthScore + " / 100\n\n" +
                 "Do NOT use complex financial jargon like 'liquidity buffers' or 'underwriting'. Use plain English that anyone can understand.\n" +
                 "Evaluate and return exactly a JSON object (no markdown, no ```json, no extra text, just raw JSON) with the following structure:\n" +
                 "{\n" +
-                "  \"geminiInsights\": \"A friendly summary of how they are doing with their money this month.\",\n" +
+                "  \"geminiInsights\": \"A friendly summary of how they are doing with their money this month, especially talking about their overspending risk and expense management.\",\n" +
                 "  \"strengths\": [\n" +
                 "     \"\u2705 First thing they are doing well...\",\n" +
                 "     \"\u2705 Second thing they are doing well...\"\n" +
@@ -91,7 +97,8 @@ public class GeminiService {
                 "  \"recommendations\": [\n" +
                 "     \"Try to save a bit more next month.\",\n" +
                 "     \"Keep paying bills on time!\"\n" +
-                "  ] // List personalized, easy-to-follow recommendations.\n" +
+                "  ],\n" +
+                "  \"financialHealthExplanation\": \"A short, friendly 1-2 sentence explanation of their Financial Health Score of " + healthScore + "/100 based on their savings behavior and expense ratio.\"\n" +
                 "}";
     }
 
@@ -116,7 +123,8 @@ public class GeminiService {
 
         String rawInsights = result.path("geminiInsights").asText();
         String explanation = result.path("loanEligibilityExplanation").asText();
-        rec.setGeminiInsights(rawInsights + "\n\n[Underwriting Decision Details]: " + explanation);
+        String healthExplanation = result.path("financialHealthExplanation").asText("Your financial health is stable. Keep tracking non-essentials.");
+        rec.setGeminiInsights(rawInsights + "\n\n[Underwriting Decision Details]: " + explanation + "\n\n[Financial Health Details]: " + healthExplanation);
 
         return aiRecommendationRepository.save(rec);
     }
@@ -190,7 +198,8 @@ public class GeminiService {
             rec.setRecommendations("[]");
         }
 
-        rec.setGeminiInsights(insights + "\n\n[Underwriting Decision Details]: " + explanation);
+        String healthExplanation = "Your financial health profile indicates a solid foundation. Focus on optimizing savings behavior and maintaining a low expense-to-income ratio.";
+        rec.setGeminiInsights(insights + "\n\n[Underwriting Decision Details]: " + explanation + "\n\n[Financial Health Details]: " + healthExplanation);
         return aiRecommendationRepository.save(rec);
     }
 

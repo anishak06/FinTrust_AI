@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from 'recharts';
-import { Cpu, ShieldCheck, DollarSign, LogOut, Plus, Trash2, AlertCircle, ChevronRight, CheckCircle, ArrowRight, Lightbulb, Target, Search, Bell, User, FileText, Calendar, ChevronDown, CreditCard, TrendingUp, Wallet, History, CheckCircle2, Menu, X, Globe, Activity, QrCode } from 'lucide-react';
+import { Cpu, ShieldCheck, DollarSign, LogOut, Plus, Trash2, AlertCircle, ChevronRight, CheckCircle, ArrowRight, Lightbulb, Target, Search, Bell, User, FileText, Calendar, ChevronDown, CreditCard, TrendingUp, Wallet, History, CheckCircle2, Menu, X, Globe, Activity, QrCode, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumBackground from '../components/PremiumBackground';
@@ -662,16 +662,146 @@ export default function Dashboard() {
                   <span className="text-[9px] uppercase text-white/40 tracking-wider font-bold">Financial Health</span>
                   <div className="mt-3.5 space-y-1">
                     <span className="text-xl font-extrabold text-[#59CFFF]">
-                      {latestAssessment.healthStatus}
+                      {latestAssessment.financialHealthScore !== undefined ? `${latestAssessment.financialHealthScore}/100` : latestAssessment.healthStatus}
                     </span>
                     <p className="text-[10px] text-white/50 leading-normal">
-                      Stability probability score: Low Risk
+                      Index Level: {latestAssessment.financialHealthScoreLabel || 'Average'}
                     </p>
                   </div>
-                  <span className="text-[9px] text-white/30 mt-3 block">Calculated via ledger balance</span>
+                  <span className="text-[9px] text-white/30 mt-3 block">Calculated via savings & outflows</span>
                 </div>
 
               </div>
+
+              {/* AI Risk Card & Financial Health Card Section */}
+              {latestAssessment && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                  {/* Financial Health Score circular progress gauge */}
+                  <div className="glass-card p-6 rounded-xl text-left flex flex-col justify-between relative overflow-hidden">
+                    <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-white/80 flex items-center gap-1.5">
+                          <Activity className="h-4.5 w-4.5 text-[#59CFFF]" /> Financial Health Score
+                        </h3>
+                        <p className="text-[9px] text-white/40 mt-0.5">Comprehensive financial stability score</p>
+                      </div>
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-white/5 border border-white/10 text-[#59CFFF]">
+                        0-100 Scale
+                      </span>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-6 py-4">
+                      {/* Circular Progress Gauge */}
+                      <div className="relative flex items-center justify-center shrink-0">
+                        <svg className="w-24 h-24 transform -rotate-90">
+                          <circle cx="48" cy="48" r="40" stroke="rgba(255,255,255,0.03)" strokeWidth="6" fill="transparent" />
+                          <circle 
+                            cx="48" 
+                            cy="48" 
+                            r="40" 
+                            stroke={
+                              latestAssessment.financialHealthScore >= 90 ? '#34C759' :
+                              latestAssessment.financialHealthScore >= 75 ? '#82E0AA' :
+                              latestAssessment.financialHealthScore >= 60 ? '#F4B400' : '#D1495B'
+                            } 
+                            strokeWidth="6" 
+                            fill="transparent" 
+                            strokeDasharray="251.2"
+                            strokeDashoffset={251.2 - (251.2 * latestAssessment.financialHealthScore) / 100}
+                            strokeLinecap="round"
+                            style={{
+                              filter: `drop-shadow(0 0 4px ${
+                                latestAssessment.financialHealthScore >= 90 ? '#34C759' :
+                                latestAssessment.financialHealthScore >= 75 ? '#82E0AA' :
+                                latestAssessment.financialHealthScore >= 60 ? '#F4B400' : '#D1495B'
+                              }40)`
+                            }}
+                          />
+                        </svg>
+                        <div className="absolute flex flex-col items-center justify-center">
+                          <span className="text-xl font-extrabold tracking-tight text-white">
+                            {latestAssessment.financialHealthScore}
+                          </span>
+                          <span className="text-[7px] text-white/40 font-bold uppercase tracking-wider">Health Index</span>
+                        </div>
+                      </div>
+
+                      {/* Explanation */}
+                      <div className="space-y-2 text-left">
+                        <div>
+                          <span className="text-[10px] uppercase font-bold text-white/40 block">Status</span>
+                          <span className={`text-sm font-extrabold ${
+                            latestAssessment.financialHealthScore >= 90 ? 'text-emerald-400' :
+                            latestAssessment.financialHealthScore >= 75 ? 'text-green-300' :
+                            latestAssessment.financialHealthScore >= 60 ? 'text-amber-400' : 'text-rose-400'
+                          }`}>
+                            {latestAssessment.financialHealthScoreLabel || 'Average'}
+                          </span>
+                        </div>
+                        <p className="text-xs text-white/50 leading-relaxed font-sans">
+                          {latestAssessment.financialHealthExplanation || 'Your alternative spending and saving patterns are currently stable.'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* AI Financial Risk Card */}
+                  <div className={`glass-card p-6 rounded-xl text-left flex flex-col justify-between relative overflow-hidden transition-all duration-300 ${
+                    ['High', 'Critical'].includes(latestAssessment.overspendingRiskLevel) ? 'border-[#D1495B]/30 hover:border-[#D1495B]/40 shadow-[0_0_20px_rgba(209,73,91,0.08)]' : ''
+                  }`}>
+                    <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                      <div>
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-white/80 flex items-center gap-1.5">
+                          <AlertTriangle className={`h-4.5 w-4.5 ${
+                            ['High', 'Critical'].includes(latestAssessment.overspendingRiskLevel) ? 'text-rose-400 animate-pulse' : 'text-[#59CFFF]'
+                          }`} /> AI Financial Risk Alert
+                        </h3>
+                        <p className="text-[9px] text-white/40 mt-0.5">Automated cash outflow monitoring</p>
+                      </div>
+                      <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${
+                        latestAssessment.overspendingRiskLevel === 'Critical' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                        latestAssessment.overspendingRiskLevel === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                        latestAssessment.overspendingRiskLevel === 'Moderate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                        'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                      }`}>
+                        {latestAssessment.overspendingRiskLevel || 'Low'} Risk
+                      </span>
+                    </div>
+
+                    <div className="py-4 space-y-3.5 flex-grow flex flex-col justify-center">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-[10px] uppercase font-bold text-white/40">Expense Ratio:</span>
+                        <span className={`text-base font-extrabold ${
+                          ['High', 'Critical'].includes(latestAssessment.overspendingRiskLevel) ? 'text-rose-400' : 'text-white'
+                        }`}>
+                          {latestAssessment.expenseRatio}%
+                        </span>
+                        {latestAssessment.creditScorePenalty > 0 && (
+                          <span className="text-[9px] text-rose-400/80 bg-rose-500/5 px-1.5 py-0.5 rounded border border-rose-500/10 font-bold font-mono">
+                            -{latestAssessment.creditScorePenalty} Score Penalty
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1">
+                        <span className="text-[9px] uppercase font-bold text-white/40 block">AI Financial Insight</span>
+                        <p className="text-xs text-white/60 leading-relaxed font-sans">
+                          {latestAssessment.geminiInsights || 'Outflow parameters are within safe limits.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {recommendations.length > 0 && (
+                      <div className="border-t border-white/5 pt-3 bg-white/[0.01] -mx-6 -mb-6 p-4 flex items-center justify-between text-[10px] text-[#59CFFF] font-semibold">
+                        <span className="truncate max-w-[80%]">💡 Recommended: {recommendations[0]}</span>
+                        <button onClick={() => scrollToSection('insights-section')} className="hover:underline shrink-0">
+                          View All →
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {/* 5. Middle Charts & Recent Bills */}
               <div className="grid grid-cols-1 lg:grid-cols-5 gap-6" id="analytics-section">

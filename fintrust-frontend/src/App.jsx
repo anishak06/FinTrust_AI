@@ -9,6 +9,7 @@ import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import DataCollection from './pages/DataCollection';
 import MonthlyExpenseManager from './pages/MonthlyExpenseManager';
+import MonthlySavingsManager from './pages/MonthlySavingsManager';
 import AdminDashboard from './pages/AdminDashboard';
 
 
@@ -65,6 +66,14 @@ function App() {
             element={
               <PrivateRoute>
                 <MonthlyExpenseManager />
+              </PrivateRoute>
+            } 
+          />
+          <Route 
+            path="/monthly-savings" 
+            element={
+              <PrivateRoute>
+                <MonthlySavingsManager />
               </PrivateRoute>
             } 
           />

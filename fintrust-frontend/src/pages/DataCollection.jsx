@@ -37,31 +37,39 @@ export default function DataCollection() {
   const [isAssessing, setIsAssessing] = useState(false);
   const [assessmentStep, setAssessmentStep] = useState(0);
 
-  // Sync expenses from localStorage whenever user, month, or year changes
+  // Sync expenses and savings from localStorage whenever user, month, or year changes
   useEffect(() => {
     if (!user?.username) return;
-    const totalKey = `fintrust_total_expenses_${user.username}_${month}_${year}`;
-    const storedTotal = localStorage.getItem(totalKey);
-    if (storedTotal) {
-      setMonthlyExpenses(storedTotal);
+    
+    // Expenses
+    const expKey = `fintrust_total_expenses_${user.username}_${month}_${year}`;
+    const storedExpenses = localStorage.getItem(expKey);
+    
+    // Savings
+    const savKey = `fintrust_total_savings_${user.username}_${month}_${year}`;
+    const storedSavings = localStorage.getItem(savKey);
+
+    if (storedExpenses) {
+      setMonthlyExpenses(storedExpenses);
     } else if (stateExpenses !== undefined && month === stateMonth && year === stateYear) {
       setMonthlyExpenses(stateExpenses.toString());
     } else {
       // Redirect back if no itemized expenses exist for selected period
       navigate('/monthly-expense', { state: { month, year } });
+      return;
+    }
+
+    if (storedSavings) {
+      setMonthlySavings(storedSavings);
+    } else if (location.state?.monthlySavings !== undefined && month === stateMonth && year === stateYear) {
+      setMonthlySavings(location.state.monthlySavings.toString());
+    } else {
+      // If no savings are recorded, default to "0"
+      setMonthlySavings('0');
+      // Also write it to localStorage so it is persistent
+      localStorage.setItem(savKey, '0');
     }
   }, [month, year, user?.username, navigate]);
-
-  // Automatically calculate savings in real-time
-  useEffect(() => {
-    const inc = parseFloat(monthlyIncome);
-    const exp = parseFloat(monthlyExpenses);
-    if (!isNaN(inc) && !isNaN(exp)) {
-      setMonthlySavings((inc - exp).toString());
-    } else {
-      setMonthlySavings('');
-    }
-  }, [monthlyIncome, monthlyExpenses]);
 
 
   const steps = [
@@ -334,15 +342,24 @@ export default function DataCollection() {
               <label className="text-[10px] font-bold uppercase tracking-wider text-white/40 flex items-center gap-1.5">
                 <ClipboardList className="h-3.5 w-3.5 text-[#59CFFF]" /> Monthly Savings (₹)
               </label>
-              <input
-                type="number"
-                value={monthlySavings}
-                readOnly
-                placeholder="Auto-calculated (Income - Expenses)"
-                className="w-full px-4 py-3 rounded-lg glass-input text-xs bg-[#030e21]/40 border-white/5 cursor-not-allowed"
-                required
-                min="0"
-              />
+              <div className="relative">
+                <input
+                  type="number"
+                  value={monthlySavings}
+                  readOnly
+                  placeholder="Calculated from Savings Manager"
+                  className="w-full pl-4 pr-24 py-3 rounded-lg glass-input text-xs bg-[#030e21]/40 border-white/5 cursor-not-allowed"
+                  required
+                  min="0"
+                />
+                <button
+                  type="button"
+                  onClick={() => navigate('/monthly-savings', { state: { month, year, monthlyExpenses } })}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-[#59CFFF] hover:text-[#8ce2ff] hover:underline transition-colors"
+                >
+                  Edit Savings
+                </button>
+              </div>
             </div>
 
             {/* UPI Velocity */}

@@ -89,10 +89,17 @@ public class CreditController {
             // A. Savings Ratio (30%)
             double savingsRatio = savings / (income > 0 ? income : 1.0);
             int savingsPoints = 20;
-            if (savingsRatio >= 0.30) savingsPoints = 100;
-            else if (savingsRatio >= 0.20) savingsPoints = 80;
-            else if (savingsRatio >= 0.10) savingsPoints = 60;
-            else if (savingsRatio >= 0.05) savingsPoints = 40;
+            if (savings == 0) {
+                savingsPoints = 0;
+            } else if (savingsRatio >= 0.30) {
+                savingsPoints = 100;
+            } else if (savingsRatio >= 0.20) {
+                savingsPoints = 80;
+            } else if (savingsRatio >= 0.10) {
+                savingsPoints = 60;
+            } else if (savingsRatio >= 0.05) {
+                savingsPoints = 40;
+            }
 
             // B. Bill Payment Consistency (25%)
             int billPoints = 20;
@@ -139,6 +146,16 @@ public class CreditController {
 
             // Bounded score translation (W from 20 to 100 -> Score from 300 to 900)
             int score = (int) Math.round(300.0 + ((weightedResult - 20.0) / 80.0) * 600.0);
+            double expenseRatioPct = expenseRatio * 100.0;
+            int penalty = 0;
+            if (expenseRatioPct > 120.0) {
+                penalty = 50;
+            } else if (expenseRatioPct > 110.0) {
+                penalty = 35;
+            } else if (expenseRatioPct > 100.0) {
+                penalty = 20;
+            }
+            score = score - penalty;
             score = Math.max(300, Math.min(900, score));
 
             String riskLevel = score >= 750 ? "Low Risk" : (score >= 600 ? "Medium Risk" : "High Risk");
@@ -201,9 +218,34 @@ public class CreditController {
             la.setRiskCategory(riskCategory);
             loanAssessmentRepository.save(la);
 
+            // Calculate Financial Health Score for Gemini
+            int healthExpensePoints = 20;
+            if (expenseRatio <= 0.70) healthExpensePoints = 100;
+            else if (expenseRatio <= 0.80) healthExpensePoints = 80;
+            else if (expenseRatio <= 0.90) healthExpensePoints = 60;
+            else if (expenseRatio <= 1.00) healthExpensePoints = 40;
+
+            int healthSavingsPoints = 20;
+            if (savings == 0) healthSavingsPoints = 0;
+            else if (savingsRatio >= 0.30) healthSavingsPoints = 100;
+            else if (savingsRatio >= 0.20) healthSavingsPoints = 80;
+            else if (savingsRatio >= 0.10) healthSavingsPoints = 60;
+            else if (savingsRatio >= 0.05) healthSavingsPoints = 40;
+
+            int healthScore = (int) Math.round((healthExpensePoints * 0.40) + (healthSavingsPoints * 0.30) + (billConsistencyPct * 0.20) + (stabilityPoints * 0.10));
+            String overspendingRisk = "Low";
+            if (expenseRatioPct > 120.0) {
+                overspendingRisk = "Critical";
+            } else if (expenseRatioPct > 100.0) {
+                overspendingRisk = "High";
+            } else if (expenseRatioPct > 90.0) {
+                overspendingRisk = "Moderate";
+            }
+
             // 6. Invoke Gemini AI (Insights Only, PII Strip Enforced)
             AiRecommendation rec = geminiService.generateFinancialInsights(
-                    userId, score, income, savings, expenses, billConsistencyPct, transactions, loanEligible, suggestedAmount, month, year
+                    userId, score, income, savings, expenses, billConsistencyPct, transactions, loanEligible, suggestedAmount, month, year,
+                    expenseRatioPct, overspendingRisk, penalty, healthScore
             );
 
             // 7. Audit Logging
@@ -287,20 +329,96 @@ public class CreditController {
         if (cs.getScore() >= 750) health = "Excellent";
         else if (cs.getScore() >= 650) health = "Good";
         else if (cs.getScore() >= 550) health = "Fair";
-        
         map.put("healthStatus", health);
-        map.put("monthlyIncome", fd.getIncome());
-        map.put("monthlyExpenses", fd.getExpenses());
-        map.put("monthlySavings", fd.getSavings());
+        
+        double income = fd.getIncome() != null ? fd.getIncome() : 0.0;
+        double expenses = fd.getExpenses() != null ? fd.getExpenses() : 0.0;
+        double savings = fd.getSavings() != null ? fd.getSavings() : 0.0;
+        
+        map.put("monthlyIncome", income);
+        map.put("monthlyExpenses", expenses);
+        map.put("monthlySavings", savings);
         map.put("upiTransactionFrequency", fd.getTransactionCount());
         map.put("loanEligible", la.getEligibility());
         map.put("suggestedLoanAmount", la.getLoanAmount());
         map.put("scoreBreakdown", cs.getScoreBreakdown());
         map.put("recommendations", rec.getRecommendations());
-        map.put("geminiInsights", rec.getGeminiInsights());
         map.put("strengths", rec.getStrengths());
         map.put("weaknesses", rec.getWeaknesses());
         map.put("createdAt", cs.getCalculationDate());
+
+        // Dynamic calculation of new requested metrics
+        double expenseRatio = (expenses / (income > 0 ? income : 1.0)) * 100.0;
+        map.put("expenseRatio", Math.round(expenseRatio * 10.0) / 10.0);
+
+        String overspendingRisk = "Low";
+        int penalty = 0;
+        if (expenseRatio > 120.0) {
+            overspendingRisk = "Critical";
+            penalty = 50;
+        } else if (expenseRatio > 110.0) {
+            overspendingRisk = "High";
+            penalty = 35;
+        } else if (expenseRatio > 100.0) {
+            overspendingRisk = "High";
+            penalty = 20;
+        } else if (expenseRatio > 90.0) {
+            overspendingRisk = "Moderate";
+        }
+        map.put("overspendingRiskLevel", overspendingRisk);
+        map.put("creditScorePenalty", penalty);
+
+        // Financial Health Score Components
+        int healthExpensePoints = 20;
+        if (expenseRatio <= 70.0) healthExpensePoints = 100;
+        else if (expenseRatio <= 80.0) healthExpensePoints = 80;
+        else if (expenseRatio <= 90.0) healthExpensePoints = 60;
+        else if (expenseRatio <= 100.0) healthExpensePoints = 40;
+
+        double savingsRatio = savings / (income > 0 ? income : 1.0);
+        int healthSavingsPoints = 20;
+        if (savings == 0) healthSavingsPoints = 0;
+        else if (savingsRatio >= 0.30) healthSavingsPoints = 100;
+        else if (savingsRatio >= 0.20) healthSavingsPoints = 80;
+        else if (savingsRatio >= 0.10) healthSavingsPoints = 60;
+        else if (savingsRatio >= 0.05) healthSavingsPoints = 40;
+
+        double billConsistencyPct = fd.getPaymentConsistency() != null ? fd.getPaymentConsistency() : 100.0;
+
+        int stabilityPoints = 40;
+        if (fd.getIncomeStability() != null) {
+            if (fd.getIncomeStability().toLowerCase().contains("salaried")) stabilityPoints = 100;
+            else if (fd.getIncomeStability().toLowerCase().contains("freelancer")) stabilityPoints = 80;
+            else stabilityPoints = 60;
+        }
+
+        int healthScore = (int) Math.round((healthExpensePoints * 0.40) + (healthSavingsPoints * 0.30) + (billConsistencyPct * 0.20) + (stabilityPoints * 0.10));
+        map.put("financialHealthScore", healthScore);
+
+        String healthLabel = "Poor";
+        if (healthScore >= 90) healthLabel = "Excellent";
+        else if (healthScore >= 75) healthLabel = "Good";
+        else if (healthScore >= 60) healthLabel = "Average";
+        map.put("financialHealthScoreLabel", healthLabel);
+
+        // AI Financial Risk Insight and Recommendation parser
+        String geminiInsights = rec.getGeminiInsights();
+        String parsedInsights = "No AI insights generated yet for this borrower.";
+        String parsedHealthExplanation = "Your financial health profile indicates a solid foundation. Focus on optimizing savings behavior and maintaining a low expense-to-income ratio.";
+        
+        if (geminiInsights != null) {
+            String[] parts = geminiInsights.split("\\[Underwriting Decision Details\\]:");
+            parsedInsights = parts[0].trim();
+            if (parts.length > 1) {
+                String[] subParts = parts[1].split("\\[Financial Health Details\\]:");
+                if (subParts.length > 1) {
+                    parsedHealthExplanation = subParts[1].trim();
+                }
+            }
+        }
+        map.put("geminiInsights", parsedInsights);
+        map.put("financialHealthExplanation", parsedHealthExplanation);
+
         return map;
     }
 

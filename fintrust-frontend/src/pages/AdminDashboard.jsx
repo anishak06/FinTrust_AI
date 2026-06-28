@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { Cpu, Users, Award, ShieldCheck, CheckCircle, AlertCircle, ArrowLeft, RefreshCw, Calendar, Search, Sparkles } from 'lucide-react';
+import { Cpu, Users, Award, ShieldCheck, CheckCircle, AlertCircle, ArrowLeft, RefreshCw, Calendar, Search, Sparkles, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import PremiumBackground from '../components/PremiumBackground';
 
@@ -434,6 +434,53 @@ export default function AdminDashboard() {
                             </div>
                           </div>
                         ))}
+                      </div>
+                    </div>
+
+                    {/* AI Financial Risk Alert Card */}
+                    <div className={`glass-card p-5 rounded-xl text-left space-y-4 relative overflow-hidden transition-all duration-300 border-white/5 ${
+                      ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'border-[#D1495B]/30 shadow-[0_0_15px_rgba(209,73,91,0.08)]' : ''
+                    }`}>
+                      <div className="flex justify-between items-center border-b border-white/5 pb-3">
+                        <div>
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-white/85 flex items-center gap-1.5">
+                            <AlertTriangle className={`h-4.5 w-4.5 ${
+                              ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'text-rose-400 animate-pulse' : 'text-[#59CFFF]'
+                            }`} /> AI Financial Risk Alert
+                          </h4>
+                          <p className="text-[8px] text-white/40 mt-0.5">Automated cash outflow monitoring</p>
+                        </div>
+                        <span className={`text-[9px] font-bold px-2 py-0.5 rounded border ${
+                          searchResult.overspendingRiskLevel === 'Critical' ? 'bg-rose-500/10 text-rose-400 border-rose-500/20' :
+                          searchResult.overspendingRiskLevel === 'High' ? 'bg-orange-500/10 text-orange-400 border-orange-500/20' :
+                          searchResult.overspendingRiskLevel === 'Moderate' ? 'bg-amber-500/10 text-amber-400 border-amber-500/20' :
+                          'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                        }`}>
+                          {searchResult.overspendingRiskLevel || 'Low'} Risk
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-baseline gap-2 text-xs">
+                          <span className="text-[9px] uppercase font-bold text-white/40">Expense Ratio:</span>
+                          <span className={`font-bold ${
+                            ['High', 'Critical'].includes(searchResult.overspendingRiskLevel) ? 'text-rose-400' : 'text-white'
+                          }`}>
+                            {searchResult.expenseRatio}%
+                          </span>
+                          {searchResult.creditScorePenalty > 0 && (
+                            <span className="text-[8px] text-rose-400 bg-rose-500/5 px-1.5 py-0.5 rounded border border-rose-500/10 font-bold font-mono">
+                              -{searchResult.creditScorePenalty} Score Penalty
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="space-y-1">
+                          <span className="text-[9px] uppercase font-bold text-white/40 block">AI Financial Insight</span>
+                          <p className="text-xs text-white/60 leading-relaxed font-sans">
+                            {searchResult.geminiInsights || 'Outflow parameters are within safe limits.'}
+                          </p>
+                        </div>
                       </div>
                     </div>
 
