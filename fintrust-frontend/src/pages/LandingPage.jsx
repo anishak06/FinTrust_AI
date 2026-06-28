@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, ShieldCheck, TrendingUp, Users, ArrowRight, Award, Zap, Layers, HelpCircle, Activity, Globe, Check, Lock, ChevronRight } from 'lucide-react';
+import { Cpu, ShieldCheck, TrendingUp, Users, ArrowRight, Award, Zap, Layers, HelpCircle, Activity, Globe, Check, Lock, ChevronRight, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import PremiumBackground from '../components/PremiumBackground';
 import NetworkGlobe from '../components/NetworkGlobe';
 
 export default function LandingPage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [telemetryLogs, setTelemetryLogs] = useState([
     "[Node MUMBAI] verified Arjun Sharma alternative credit ledger (+32 pts)",
@@ -92,6 +94,13 @@ export default function LandingPage() {
             </nav>
             <div className="h-4 w-px bg-white/10 hidden md:block" />
             <div className="flex items-center gap-3">
+              <button
+                onClick={toggleTheme}
+                className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+                aria-label="Toggle theme"
+              >
+                {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-amber-400" /> : <Moon className="h-4.5 w-4.5 text-[#1e90ff]" />}
+              </button>
               {isAuthenticated ? (
                 <button 
                   onClick={() => navigate('/dashboard')}
@@ -121,7 +130,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pt-12 pb-24 md:pt-20 lg:pt-28">
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pt-16 pb-28 md:pt-24 lg:pt-32">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           
           {/* Hero Left Content */}
@@ -130,7 +139,11 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6 }}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/5 border border-white/10 text-xs font-semibold text-[#59CFFF] uppercase tracking-wider"
+              className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border text-xs font-bold uppercase tracking-wider ${
+                theme === 'light' 
+                  ? 'bg-[#102C57]/10 border-[#102C57]/15 text-[#102C57]' 
+                  : 'bg-white/5 border border-white/10 text-[#59CFFF]'
+              }`}
             >
               <Zap className="h-3.5 w-3.5" /> Next-Gen Credit Inclusions
             </motion.div>
@@ -139,9 +152,13 @@ export default function LandingPage() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7, delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08]"
+              className="text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-[1.08] font-sans"
             >
-              Transforming Financial Behaviour Into <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#59CFFF] via-[#92E0FF] to-[#F5E6D3]">Credit Opportunities</span>
+              Transforming Financial Behaviour Into <span className={`text-transparent bg-clip-text bg-gradient-to-r ${
+                theme === 'light' 
+                  ? 'from-[#102C57] via-[#163D78] to-[#1e52a0]' 
+                  : 'from-[#59CFFF] via-[#92E0FF] to-[#F5E6D3]'
+              }`}>Credit Opportunities</span>
             </motion.h1>
 
             <motion.p
@@ -201,15 +218,96 @@ export default function LandingPage() {
           </div>
 
           {/* Hero Right Content: 3D Rotating Canvas Globe + Telemetry HUD */}
-          <div className="lg:col-span-5 flex flex-col justify-center items-center relative space-y-6">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
-              className="w-full max-w-[460px] relative flex justify-center"
-            >
-              <NetworkGlobe size={420} />
-            </motion.div>
+          <div className="lg:col-span-5 flex flex-col justify-center items-center relative space-y-6 min-h-[460px] w-full">
+            {/* Soft Glowing Gradient behind */}
+            <div className="absolute top-[20%] w-72 h-72 rounded-full bg-gradient-to-tr from-[#59CFFF] to-[#102C57] opacity-25 blur-[90px] pointer-events-none" />
+
+            <div className="w-full max-w-[460px] relative flex justify-center items-center h-[340px]">
+              {/* Slowly rotating network globe behind the card */}
+              <div className="absolute z-0 opacity-60 scale-95 pointer-events-none">
+                <NetworkGlobe size={380} />
+              </div>
+
+              {/* Floating 3D Credit Card on top */}
+              <motion.div
+                initial={{ opacity: 0, y: 30, rotateX: 15, rotateY: -15 }}
+                animate={{ 
+                  opacity: 1, 
+                  y: [0, -12, 0],
+                  rotateX: [12, 8, 12],
+                  rotateY: [-15, -8, -15]
+                }}
+                transition={{ 
+                  opacity: { duration: 1, delay: 0.2 },
+                  y: { repeat: Infinity, duration: 5.5, ease: "easeInOut" },
+                  rotateX: { repeat: Infinity, duration: 5.5, ease: "easeInOut" },
+                  rotateY: { repeat: Infinity, duration: 5.5, ease: "easeInOut" }
+                }}
+                whileHover={{ scale: 1.05, rotateX: 0, rotateY: 0 }}
+                style={{ transformStyle: "preserve-3d", perspective: 1000 }}
+                className={`relative z-10 w-72 h-44 rounded-2xl p-5 overflow-hidden border ${
+                  theme === 'light' 
+                    ? 'border-[#102C57]/15 shadow-[0_25px_60px_rgba(16,44,87,0.35)]' 
+                    : 'border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.75)]'
+                } flex flex-col justify-between cursor-pointer transition-shadow duration-300`}
+              >
+                {/* Card Background Gradient & Blur */}
+                <div className={`absolute inset-0 bg-gradient-to-br ${
+                  theme === 'light' 
+                    ? 'from-[#102C57] via-[#0A234A] to-[#1F4E8D]' 
+                    : 'from-white/10 via-[#030E21]/90 to-white/[0.02]'
+                } backdrop-blur-xl z-0`} />
+                {/* Glowing edge highlight */}
+                <div className="absolute inset-x-0 top-0 h-[1px] bg-gradient-to-r from-transparent via-[#59CFFF]/60 to-transparent" />
+                <div className="absolute inset-y-0 left-0 w-[1px] bg-gradient-to-b from-transparent via-[#59CFFF]/20 to-transparent" />
+
+                {/* Card Header */}
+                <div className="flex justify-between items-start z-10 relative">
+                  <div className="flex items-center gap-1.5">
+                    <Cpu className="h-4.5 w-4.5 text-[#59CFFF] animate-pulse" />
+                    <span className="text-[10px] font-bold tracking-widest text-white/80 keep-white font-mono">FINTRUST AI</span>
+                  </div>
+                  <span className="text-[8px] font-bold text-white/40 keep-white tracking-wider uppercase font-mono">Alternative Ledger</span>
+                </div>
+
+                {/* Chip & Wi-Fi */}
+                <div className="flex items-center gap-3 z-10 relative my-1">
+                  <div className="w-8 h-6 rounded-md bg-gradient-to-r from-[#F5E6D3] via-[#BBA68D] to-[#E1D0BC] opacity-80 border border-black/10 flex items-center justify-center overflow-hidden">
+                    {/* Chip lines */}
+                    <div className="grid grid-cols-3 grid-rows-3 gap-[1px] w-full h-full p-1 opacity-45">
+                      <div className="border border-black/40"></div>
+                      <div className="border border-black/40"></div>
+                      <div className="border border-black/40"></div>
+                      <div className="border border-black/40"></div>
+                      <div className="border border-black/40"></div>
+                      <div className="border border-black/40"></div>
+                    </div>
+                  </div>
+                  <svg className="w-4 h-4 text-white/30 keep-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M5 12a10 10 0 0 1 14 0" />
+                    <path d="M8 15a6 6 0 0 1 8 0" />
+                    <path d="M11 18a2 2 0 0 1 2 0" />
+                  </svg>
+                </div>
+
+                {/* Card Number & Details */}
+                <div className="space-y-2 z-10 relative">
+                  <div className="text-sm tracking-[0.25em] font-mono text-white keep-white font-semibold">
+                    •••• •••• •••• 8492
+                  </div>
+                  <div className="flex justify-between items-end text-[8px] uppercase tracking-wider font-mono text-white/50 keep-white">
+                    <div className="text-left">
+                      <div className="text-[6px] text-white/30 keep-white">Cardholder</div>
+                      <div className="font-bold text-white/70 keep-white">Arjun Sharma</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[6px] text-white/30 keep-white">Trust Score</div>
+                      <div className="font-bold text-emerald-400 text-xs">785 / 900</div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
 
             {/* Globe Telemetry HUD Panel */}
             <motion.div

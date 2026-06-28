@@ -9,13 +9,44 @@
     color-scheme: dark;
     --font-primary: 'Plus Jakarta Sans', sans-serif;
     --font-secondary: 'Manrope', sans-serif;
+
+    /* Theme Custom Properties - Dark default */
+    --bg-color-main: #010308;
+    --bg-gradient-start: #050b1d;
+    --bg-gradient-end: #010308;
+    --text-primary: #ffffff;
+    --text-secondary: rgba(255, 255, 255, 0.6);
+    --text-muted: rgba(255, 255, 255, 0.4);
+    --glass-bg: rgba(3, 7, 20, 0.55);
+    --glass-border: rgba(255, 255, 255, 0.05);
+    --glass-shadow: rgba(0, 0, 0, 0.8);
+    --glass-input-bg: rgba(3, 14, 33, 0.5);
+    --glass-input-border: rgba(255, 255, 255, 0.08);
+  }
+
+  :root.light {
+    color-scheme: light;
+
+    /* Theme Custom Properties - Light mode */
+    --bg-color-main: #F4F6F9;
+    --bg-gradient-start: #E9EDF5;
+    --bg-gradient-end: #F4F6F9;
+    --text-primary: #121826;
+    --text-secondary: rgba(18, 24, 38, 0.75);
+    --text-muted: rgba(18, 24, 38, 0.5);
+    --glass-bg: rgba(255, 255, 255, 0.7);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --glass-shadow: rgba(18, 24, 38, 0.08);
+    --glass-input-bg: rgba(255, 255, 255, 0.9);
+    --glass-input-border: rgba(0, 0, 0, 0.12);
   }
   
   body {
     font-family: var(--font-primary);
-    background-color: #010308;
-    background-image: radial-gradient(circle at 50% 0%, #050b1d 0%, #010308 70%, #000002 100%);
+    background-color: var(--bg-color-main);
+    background-image: radial-gradient(circle at 50% 0%, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
     background-attachment: fixed;
+    color: var(--text-primary);
     margin: 0;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -25,6 +56,7 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-primary);
     letter-spacing: -0.02em;
+    color: var(--text-primary);
   }
   
   p, span, div, input, select, button, table {
@@ -160,5 +192,165 @@
 
 .animate-mesh-3 {
   animation: mesh-move 18s infinite alternate ease-in-out;
+}
+
+.light {
+  /* Override backgrounds & colors */
+  body {
+    background-color: #F8FAFF !important;
+    background-image: linear-gradient(135deg, #F8FAFF 0%, #EEF4FF 50%, #E8F1FF 100%) !important;
+    background-attachment: fixed !important;
+    color: var(--text-primary);
+  }
+  
+  header {
+    background-color: rgba(244, 246, 249, 0.75) !important;
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  .glass-card {
+    background: var(--glass-bg);
+    border-color: var(--glass-border);
+    box-shadow: 0 10px 30px -10px var(--glass-shadow);
+  }
+  
+  .glass-card-hover:hover {
+    background: rgba(255, 255, 255, 0.95);
+    border-color: rgba(89, 207, 255, 0.35);
+    box-shadow: 0 15px 35px -10px rgba(89, 207, 255, 0.12);
+  }
+  
+  .glass-input {
+    background: var(--glass-input-bg);
+    border-color: var(--glass-input-border);
+    color: var(--text-primary);
+  }
+  
+  .glass-input:focus {
+    background: #ffffff;
+    border-color: rgba(89, 207, 255, 0.6);
+    box-shadow: 0 0 15px rgba(89, 207, 255, 0.08);
+  }
+  
+  .text-white:not(.keep-white) {
+    color: var(--text-primary) !important;
+  }
+  
+  .text-white\/30:not(.keep-white) {
+    color: var(--text-muted) !important;
+  }
+  
+  .text-white\/40:not(.keep-white) {
+    color: var(--text-muted) !important;
+  }
+  
+  .text-white\/50:not(.keep-white) {
+    color: var(--text-secondary) !important;
+  }
+  
+  .text-white\/60:not(.keep-white) {
+    color: var(--text-secondary) !important;
+  }
+  
+  .text-white\/70:not(.keep-white) {
+    color: var(--text-secondary) !important;
+  }
+  
+  .text-white\/85:not(.keep-white) {
+    color: var(--text-primary) !important;
+  }
+  
+  .border-white\/5 {
+    border-color: rgba(0, 0, 0, 0.08) !important;
+  }
+  
+  .border-white\/10 {
+    border-color: rgba(0, 0, 0, 0.12) !important;
+  }
+  
+  .bg-\[\#010308\] {
+    background-color: var(--bg-color-main) !important;
+  }
+  
+  .bg-\[\#030E21\] {
+    background-color: #E9EDF5 !important;
+  }
+  
+  .bg-\[\#030E21\]\/20 {
+    background-color: rgba(255, 255, 255, 0.45) !important;
+  }
+  
+  .bg-\[\#01050F\]\/40 {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+  }
+  
+  .bg-\[\#01050F\]\/10 {
+    background-color: rgba(0, 0, 0, 0.01) !important;
+  }
+  
+  .bg-white\/5 {
+    background-color: rgba(0, 0, 0, 0.035) !important;
+  }
+  
+  .bg-white\/\[0\.01\] {
+    background-color: rgba(0, 0, 0, 0.01) !important;
+  }
+  
+  .bg-white\/\[0\.02\] {
+    background-color: rgba(0, 0, 0, 0.015) !important;
+  }
+  
+  .bg-gradient-to-br.from-\[\#020712\].to-\[\#000205\] {
+    background-image: linear-gradient(to bottom right, #E9EDF5, #F4F6F9) !important;
+  }
+  
+  .animate-mesh-1 {
+    background: #CFD9E8 !important;
+    opacity: 0.35 !important;
+  }
+  
+  .animate-mesh-2 {
+    background: #D5E1F2 !important;
+    opacity: 0.3 !important;
+  }
+  
+  .animate-mesh-3 {
+    background: #EAF0FA !important;
+    opacity: 0.5 !important;
+  }
+  
+  .text-glow-sky {
+    text-shadow: none !important;
+  }
+  
+  .btn-outline-premium {
+    border-color: rgba(16, 44, 87, 0.16) !important;
+    background: rgba(16, 44, 87, 0.02) !important;
+    color: #102C57 !important;
+  }
+  
+  .btn-outline-premium:hover {
+    background: rgba(16, 44, 87, 0.06) !important;
+    border-color: rgba(16, 44, 87, 0.3) !important;
+    color: #102C57 !important;
+  }
+
+  .btn-glow-sky {
+    background: linear-gradient(135deg, #102C57 0%, #163D78 100%) !important;
+    color: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(16, 44, 87, 0.15) !important;
+  }
+
+  .btn-glow-sky:hover {
+    box-shadow: 0 8px 25px rgba(16, 44, 87, 0.28) !important;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: #E9EDF5;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.08);
+  }
 }
 

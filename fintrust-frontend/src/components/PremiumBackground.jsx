@@ -39,8 +39,11 @@ export default function PremiumBackground() {
     const draw = () => {
       ctx.clearRect(0, 0, width, height);
 
+      // Check if light mode is active
+      const isLightMode = document.documentElement.classList.contains('light');
+
       // 1. Draw subtle financial grid ledger pattern
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.015)';
+      ctx.strokeStyle = isLightMode ? 'rgba(16, 44, 87, 0.035)' : 'rgba(255, 255, 255, 0.015)';
       ctx.lineWidth = 1;
       
       // Vertical lines
@@ -71,7 +74,9 @@ export default function PremiumBackground() {
         if (p.y > height) p.y = 0;
 
         ctx.beginPath();
-        ctx.fillStyle = `rgba(89, 207, 255, ${p.opacity})`;
+        ctx.fillStyle = isLightMode 
+          ? `rgba(16, 44, 87, ${p.opacity * 0.45})` 
+          : `rgba(89, 207, 255, ${p.opacity})`;
         ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
         ctx.fill();
       });
@@ -87,6 +92,8 @@ export default function PremiumBackground() {
     };
   }, []);
 
+  const isLightMode = typeof document !== 'undefined' ? document.documentElement.classList.contains('light') : false;
+
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden pointer-events-none z-0">
       {/* 3D Mesh glowing spheres */}
@@ -98,11 +105,11 @@ export default function PremiumBackground() {
       <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
 
       {/* Elegant flowing curved background vector paths */}
-      <svg className="absolute inset-0 w-full h-full opacity-[0.03]" xmlns="http://www.w3.org/2000/svg">
+      <svg className={`absolute inset-0 w-full h-full ${isLightMode ? 'opacity-[0.06]' : 'opacity-[0.03]'}`} xmlns="http://www.w3.org/2000/svg">
         <path
           d="M -100,200 Q 300,450 700,100 T 1500,600"
           fill="none"
-          stroke="#59CFFF"
+          stroke={isLightMode ? "#102C57" : "#59CFFF"}
           strokeWidth="2.5"
           className="animate-pulse"
           style={{ animationDuration: '8s' }}
@@ -110,7 +117,7 @@ export default function PremiumBackground() {
         <path
           d="M -50,600 Q 500,200 900,700 T 1800,250"
           fill="none"
-          stroke="#F5E6D3"
+          stroke={isLightMode ? "#163D78" : "#F5E6D3"}
           strokeWidth="1.5"
           className="animate-pulse"
           style={{ animationDuration: '12s' }}

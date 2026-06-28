@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 
 // Pages
 import LandingPage from './pages/LandingPage';
@@ -44,64 +45,66 @@ function AdminRoute({ children }) {
 
 function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Public Routes */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
 
-          {/* Secured Borrower Routes */}
-          <Route 
-            path="/dashboard" 
-            element={
-              <PrivateRoute>
-                <Dashboard />
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/monthly-expense" 
-            element={
-              <PrivateRoute>
-                <MonthlyExpenseManager />
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/monthly-savings" 
-            element={
-              <PrivateRoute>
-                <MonthlySavingsManager />
-              </PrivateRoute>
-            } 
-          />
-          <Route 
-            path="/check-eligibility" 
-            element={
-              <PrivateRoute>
-                <DataCollection />
-              </PrivateRoute>
-            } 
-          />
+            {/* Secured Borrower Routes */}
+            <Route 
+              path="/dashboard" 
+              element={
+                <PrivateRoute>
+                  <Dashboard />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/monthly-expense" 
+              element={
+                <PrivateRoute>
+                  <MonthlyExpenseManager />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/monthly-savings" 
+              element={
+                <PrivateRoute>
+                  <MonthlySavingsManager />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/check-eligibility" 
+              element={
+                <PrivateRoute>
+                  <DataCollection />
+                </PrivateRoute>
+              } 
+            />
 
 
-          {/* Secured Admin Routes */}
-          <Route 
-            path="/admin" 
-            element={
-              <AdminRoute>
-                <AdminDashboard />
-              </AdminRoute>
-            } 
-          />
+            {/* Secured Admin Routes */}
+            <Route 
+              path="/admin" 
+              element={
+                <AdminRoute>
+                  <AdminDashboard />
+                </AdminRoute>
+              } 
+            />
 
-          {/* Fallback Catch-all Redirect */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            {/* Fallback Catch-all Redirect */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

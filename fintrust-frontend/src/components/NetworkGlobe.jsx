@@ -179,8 +179,19 @@ export default function NetworkGlobe({ size = 500 }) {
         };
       };
 
+      // Check if light mode is active
+      const isLightMode = document.documentElement.classList.contains('light');
+
+      // Dynamic theme colors
+      const globeGridColor = isLightMode ? 'rgba(16, 44, 87, 0.35)' : 'rgba(89, 207, 255, 0.12)';
+      const globeRingColor = isLightMode ? 'rgba(16, 44, 87, 0.42)' : 'rgba(89, 207, 255, 0.15)';
+      const dotColorPrefix = isLightMode ? 'rgba(16, 44, 87,' : 'rgba(89, 207, 255,';
+      const connectionColor = isLightMode ? 'rgba(16, 44, 87, 0.65)' : 'rgba(89, 207, 255, 0.45)';
+      const hubColor = isLightMode ? '#102C57' : '#59CFFF';
+      const hubPulseColor = isLightMode ? 'rgba(16, 44, 87, 0.4)' : 'rgba(89, 207, 255, 0.3)';
+
       // 1. Draw Globe mesh lines (subtle grid outline behind)
-      ctx.strokeStyle = 'rgba(89, 207, 255, 0.12)';
+      ctx.strokeStyle = globeGridColor;
       ctx.lineWidth = 0.5;
       ctx.beginPath();
       ctx.arc(center, center, radius, 0, Math.PI * 2);
@@ -191,7 +202,7 @@ export default function NetworkGlobe({ size = 500 }) {
       for (let r = 0; r < rings; r++) {
         const phi = (r / rings) * Math.PI;
         ctx.beginPath();
-        ctx.strokeStyle = 'rgba(89, 207, 255, 0.15)';
+        ctx.strokeStyle = globeRingColor;
         ctx.lineWidth = 0.5;
         for (let theta = 0; theta <= Math.PI * 2 + 0.1; theta += 0.15) {
           const x = Math.cos(theta) * Math.sin(phi);
@@ -237,7 +248,7 @@ export default function NetworkGlobe({ size = 500 }) {
         // Only draw if both are visible (or front facing mostly)
         if (p1.z < 80 && p2.z < 80) {
           ctx.beginPath();
-          ctx.strokeStyle = 'rgba(89, 207, 255, 0.45)';
+          ctx.strokeStyle = connectionColor;
           ctx.lineWidth = 1.2;
           ctx.moveTo(p1.x, p1.y);
           
@@ -266,9 +277,9 @@ export default function NetworkGlobe({ size = 500 }) {
 
           // Glow particle
           ctx.beginPath();
-          ctx.fillStyle = conn.color;
-          ctx.shadowColor = conn.color;
-          ctx.shadowBlur = 15;
+          ctx.fillStyle = isLightMode ? '#102C57' : conn.color;
+          ctx.shadowColor = isLightMode ? '#102C57' : conn.color;
+          ctx.shadowBlur = isLightMode ? 4 : 15;
           ctx.arc(packetX, packetY, 2.8, 0, Math.PI * 2);
           ctx.fill();
           ctx.shadowBlur = 0; // reset
@@ -282,7 +293,7 @@ export default function NetworkGlobe({ size = 500 }) {
         
         ctx.beginPath();
         // Highlight active hubs slightly
-        ctx.fillStyle = `rgba(89, 207, 255, ${alpha})`;
+        ctx.fillStyle = `${dotColorPrefix}${alpha})`;
         const dotSize = projected.z < 0 ? 1.5 : 0.8;
         ctx.arc(projected.x, projected.y, dotSize, 0, Math.PI * 2);
         ctx.fill();
@@ -292,7 +303,7 @@ export default function NetworkGlobe({ size = 500 }) {
       projectedParticles.forEach(part => {
         const alpha = Math.max(0.08, Math.min(0.5, (radius * 1.2 - part.z) / (radius * 2.4)));
         ctx.beginPath();
-        ctx.fillStyle = `rgba(245, 230, 211, ${alpha * 0.6})`;
+        ctx.fillStyle = isLightMode ? `rgba(16, 44, 87, ${alpha * 0.45})` : `rgba(245, 230, 211, ${alpha * 0.6})`;
         ctx.arc(part.x, part.y, 1.2, 0, Math.PI * 2);
         ctx.fill();
       });
@@ -306,23 +317,25 @@ export default function NetworkGlobe({ size = 500 }) {
           // Radar wave pulse expanding outwards
           const radarProgress = (time * 1.5 + idx * 0.3) % 1;
           ctx.beginPath();
-          ctx.strokeStyle = `rgba(89, 207, 255, ${0.65 * (1 - radarProgress)})`;
+          ctx.strokeStyle = isLightMode 
+            ? `rgba(16, 44, 87, ${0.5 * (1 - radarProgress)})` 
+            : `rgba(89, 207, 255, ${0.65 * (1 - radarProgress)})`;
           ctx.lineWidth = 0.8;
           ctx.arc(hub.x, hub.y, 4 + radarProgress * 14, 0, Math.PI * 2);
           ctx.stroke();
 
           // Outer glowing pulse
           ctx.beginPath();
-          ctx.strokeStyle = 'rgba(89, 207, 255, 0.5)';
+          ctx.strokeStyle = hubPulseColor;
           ctx.lineWidth = 1;
           ctx.arc(hub.x, hub.y, pulseSize, 0, Math.PI * 2);
           ctx.stroke();
 
           // Inner solid dot
           ctx.beginPath();
-          ctx.fillStyle = '#59CFFF';
-          ctx.shadowColor = '#59CFFF';
-          ctx.shadowBlur = 15;
+          ctx.fillStyle = hubColor;
+          ctx.shadowColor = hubColor;
+          ctx.shadowBlur = isLightMode ? 6 : 15;
           ctx.arc(hub.x, hub.y, 2.5, 0, Math.PI * 2);
           ctx.fill();
           ctx.shadowBlur = 0; // reset
@@ -343,14 +356,18 @@ export default function NetworkGlobe({ size = 500 }) {
     };
   }, [size]);
 
+  const isLightMode = typeof document !== 'undefined' ? document.documentElement.classList.contains('light') : false;
+
   return (
     <div className="relative flex items-center justify-center pointer-events-auto">
       {/* Glow highlight behind globe (Radial Gradient as requested) */}
       <div 
         className="absolute w-[85%] h-[85%] rounded-full pointer-events-none" 
         style={{
-          background: 'radial-gradient(circle, rgba(89, 207, 255, 0.28) 0%, rgba(89, 207, 255, 0) 70%)',
-          filter: 'blur(40px)'
+          background: isLightMode 
+            ? 'radial-gradient(circle, rgba(16, 44, 87, 0.16) 0%, rgba(16, 44, 87, 0) 75%)' 
+            : 'radial-gradient(circle, rgba(89, 207, 255, 0.28) 0%, rgba(89, 207, 255, 0) 70%)',
+          filter: 'blur(45px)'
         }}
       />
       <canvas

@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell } from 'recharts';
-import { Cpu, Users, Award, ShieldCheck, CheckCircle, AlertCircle, ArrowLeft, RefreshCw, Calendar, Search, Sparkles, AlertTriangle } from 'lucide-react';
+import { Cpu, Users, Award, ShieldCheck, CheckCircle, AlertCircle, ArrowLeft, RefreshCw, Calendar, Search, Sparkles, AlertTriangle, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import PremiumBackground from '../components/PremiumBackground';
 
 export default function AdminDashboard() {
+  const { theme, toggleTheme } = useTheme();
   const { token, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -144,12 +146,21 @@ export default function AdminDashboard() {
             </span>
           </div>
 
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="flex items-center gap-1 px-3 py-1.5 rounded bg-white/5 border border-white/10 text-xs hover:bg-white/10 transition-colors"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> Return to User Board
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="h-8 w-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/10 transition-all"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-amber-400" /> : <Moon className="h-4.5 w-4.5 text-[#1e90ff]" />}
+            </button>
+            <button
+              onClick={() => navigate('/dashboard')}
+              className="flex items-center gap-1 px-3 py-1.5 rounded bg-white/5 border border-white/10 text-xs hover:bg-white/10 transition-colors"
+            >
+              <ArrowLeft className="h-3.5 w-3.5" /> Return to User Board
+            </button>
+          </div>
         </div>
       </header>
 

@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, BarChart, Bar, Cell } from 'recharts';
-import { Cpu, ShieldCheck, DollarSign, LogOut, Plus, Trash2, AlertCircle, ChevronRight, CheckCircle, ArrowRight, Lightbulb, Target, Search, Bell, User, FileText, Calendar, ChevronDown, CreditCard, TrendingUp, Wallet, History, CheckCircle2, Menu, X, Globe, Activity, QrCode, AlertTriangle } from 'lucide-react';
+import { Cpu, ShieldCheck, DollarSign, LogOut, Plus, Trash2, AlertCircle, ChevronRight, CheckCircle, ArrowRight, Lightbulb, Target, Search, Bell, User, FileText, Calendar, ChevronDown, CreditCard, TrendingUp, Wallet, History, CheckCircle2, Menu, X, Globe, Activity, QrCode, AlertTriangle, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { motion, AnimatePresence } from 'framer-motion';
 import PremiumBackground from '../components/PremiumBackground';
 import NetworkGlobe from '../components/NetworkGlobe';
 
 export default function Dashboard() {
+  const { theme, toggleTheme } = useTheme();
   const { user, token, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
 
@@ -486,6 +488,15 @@ export default function Dashboard() {
             <button className="h-8 w-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-white/70 hover:text-white relative">
               <Bell className="h-4 w-4" />
               <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-[#D1495B]" />
+            </button>
+
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="h-8 w-8 rounded-lg bg-white/5 border border-white/5 flex items-center justify-center text-white/70 hover:text-white transition-all"
+              aria-label="Toggle theme"
+            >
+              {theme === 'dark' ? <Sun className="h-4.5 w-4.5 text-amber-400" /> : <Moon className="h-4.5 w-4.5 text-[#1e90ff]" />}
             </button>
 
             {/* Month & Year Select Dropdowns */}
